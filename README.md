@@ -6,7 +6,7 @@ Implementação simples em linha de comando do jogo Wordle, mas em JAVA (isso me
 
 Compile os arquivos java com:
 
-```
+```bash
 javac *.java
 ```
 

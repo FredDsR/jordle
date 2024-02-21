@@ -10,6 +10,6 @@ Compile os arquivos java com:
 javac *.java
 ```
 
-Em um terminal rode o comando `rmiregistry`, em outro terminal `java JordleServidor` e, por último, em outro terminal rode `JordleCliente`.
+Em um terminal rode o comando `rmiregistry`, em outro terminal `java JordleServidor` e, por último, em outro terminal rode `java JordleCliente`.
 
 Agora é só se divertir :)

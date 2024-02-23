@@ -28,6 +28,7 @@ public class JordleCliente {
         game.setWordToTry(wordToTry);
         game = jordle.newTry(game);
         System.out.println(game.mask);
+        System.out.println();
       }
       if (game.didIWin()) {
         System.out.println("Você acertou! Um verdadeiro jênio!");

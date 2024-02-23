@@ -79,7 +79,9 @@ public class JordleImplementacao // (1)
         game.mask = changeChar(game.mask, i, '0');
       }
 
-      if (countCharMap.containsKey(trueChar) && countCharMap.get(trueChar) > 0) {
+      System.out.println(Character.toString(tryChar) + " " + countCharMap.toString());
+      
+      if (countCharMap.containsKey(tryChar) && countCharMap.get(tryChar) > 0) {
         game.mask = changeChar(game.mask, i, '1');
         countCharMap.put(trueChar, countCharMap.get(trueChar) - 1);
       }
@@ -90,7 +92,7 @@ public class JordleImplementacao // (1)
     }
 
     // Controla vitória no jogo
-    if (game.mask == "22222") {
+    if (game.mask.equals("22222")) {
       game.winner = true;
       game.running = false;
       activeGames.remove(game.sessionId);

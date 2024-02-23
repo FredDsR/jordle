@@ -1,11 +1,13 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
+import java.util.Random;
 
 public class JordleImplementacao // (1)
              extends UnicastRemoteObject implements Jordle {
 
-  static HashMap<Session, GameStats> activeGames = new HashMap<Session, GameStats>(); 
+  static HashMap<Integer, GameStats> activeGames = new HashMap<Integer, GameStats>(); 
+  static private int maxGames = 100;
 
   public JordleImplementacao() throws RemoteException {
     super(); // (2)
@@ -15,29 +17,109 @@ public class JordleImplementacao // (1)
     System.out.println("Sessões ativas: " + activeGames.keySet().toString());
   }
 
-  public GameStats newGame() throws RemoteException {
-    // TODO: Implementar resgate de sessão ativa
-    GameStats game = new GameStats();
-    System.out.println("Novo jogo iniciado com a sessão: " + Integer.toString(game.session.id));
-    activeGames.put(game.session, game);
+  public static String changeChar(String str, int idx, char newChar) {
+    if (idx < 0 || idx >= str.length()) {
+        throw new IllegalArgumentException("Posição inválida");
+    }
+
+    char[] chars = str.toCharArray(); // Convertendo a string para um array de caracteres
+    chars[idx] = newChar; // Alterando o caractere na posição especificada
+    return new String(chars); // Convertendo o array de caracteres de volta para uma string
+}
+
+  private Integer newSession(){
+      int rand = new Random().nextInt(maxGames + 1);
+      while (activeGames.containsKey(rand)) {
+          rand = new Random().nextInt(maxGames + 1);
+      }
+      return rand;
+  }
+
+  private GameStats fetchGame(int sessionId) throws RemoteException {
+    GameStats game;
+    int newSession;
+
+    if (sessionId == -1) {
+      newSession = this.newSession();
+      game = new GameStats(newSession);
+      activeGames.put(newSession, game);
+      return game;
+    } 
+
+    if (activeGames.containsKey(sessionId)) {
+      return activeGames.get(sessionId);
+    }
+
+    throw new RemoteException("Foi mal... A sessão " + Integer.toString(sessionId) + " não existe.");
+  }
+
+  public GameStats getGame(int sessionId) throws RemoteException {
+    GameStats game = fetchGame(sessionId);
+    System.out.println("Novo jogo iniciado com a sessão: " + Integer.toString(game.sessionId));
     showActiveGames();
     return game;
   }
 
   public GameStats newTry(GameStats game) throws RemoteException {
-    System.out.println("Nova tentativa na sessão " + Integer.toString(game.session.id) + " com a palavra: " + game.wordToTry);
+    System.out.println("Nova tentativa na sessão " + Integer.toString(game.sessionId) + " com a palavra: " + game.wordToTry);
     showActiveGames();
     
+    if (game.wordToTry.length() != 5) {
+      throw new RemoteException("Palavra não tem 5 caracteres.");
+    }
+
+    // Controla a lógica da máscara
+    HashMap<Character, Integer> countCharMap = getCountCharMap(game.word);
     for (int i = 0; i < game.word.length(); i++) {
-      if (game.wordToTry.contains(Character.toString(game.word.charAt(i)))) {
-        //TODO implementar lógica para alterar mascara quando a letra existe
+      
+      char trueChar = game.word.charAt(i);
+      char tryChar = game.wordToTry.charAt(i);
+
+      if (trueChar != tryChar) {
+        game.mask = changeChar(game.mask, i, '0');
+      }
+
+      if (countCharMap.containsKey(trueChar) && countCharMap.get(trueChar) > 0) {
+        game.mask = changeChar(game.mask, i, '1');
+        countCharMap.put(trueChar, countCharMap.get(trueChar) - 1);
       }
       
-      if (game.word.charAt(i) == game.wordToTry.charAt(i)) {
-        // TODO implementar lógica para alterar mascara quando da match 
+      if (trueChar == tryChar) {
+        game.mask = changeChar(game.mask, i, '2');
       }
     }
+
+    // Controla vitória no jogo
+    if (game.mask == "22222") {
+      game.winner = true;
+      game.running = false;
+      activeGames.remove(game.sessionId);
+    }
     
+    // Controla tentativas do jogo
+    game.tries += 1;
+
+    if (game.tries >= 5) {
+      game.running = false;
+      activeGames.remove(game.sessionId);
+    }
+
     return game;
   }
+
+  private HashMap<Character, Integer> getCountCharMap(String word) {
+    char c;
+    HashMap<Character, Integer> countCharMap = new HashMap<Character, Integer>();
+    
+    for (int i = 0; i < word.length(); i++) {
+      c = word.charAt(i);
+      if (countCharMap.containsKey(c)) {
+        countCharMap.put(c, countCharMap.get(c) + 1);
+      } else {
+        countCharMap.put(c, 1);
+      }
+    }
+    return countCharMap;
+  }
+
 }

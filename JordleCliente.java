@@ -8,13 +8,21 @@ public class JordleCliente {
     String wordToTry;
     Jordle jordle; // (1)
     Scanner scanner = new Scanner(System.in);
-    
+    int inputSessionId;
+
     try {
       jordle = (Jordle) Naming.lookup("rmi://127.0.0.1:1099/Jordle"); // (2)
-      game = jordle.newGame(); // (3)
+      
+      if (args.length > 0) {
+        inputSessionId = Integer.parseInt(args[0]);
+      } else {
+        inputSessionId = -1;
+      }
+
+      game = jordle.getGame(inputSessionId); // (3)
       System.out.println(
-        "Bem-vindo ao Jordle! Sua sessão é: " + Integer.toString(game.session.id) + "\n\n" +
-        "A palavra selecionada para você tem " + game.word.length() + " letras e você tem 5 tentativas. \n\n");
+        "Bem-vindo ao Jordle! Sua sessão é: " + Integer.toString(game.sessionId) + "\n\n" +
+        "Você tem " + Integer.toString(5 - game.tries) + " tentativas. \n\n" + game.wordToTry + "\n" + game.mask);
       while (game.running && scanner.hasNextLine()) {
         wordToTry = scanner.nextLine();
         game.setWordToTry(wordToTry);

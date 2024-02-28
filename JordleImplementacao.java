@@ -15,6 +15,9 @@ public class JordleImplementacao // (1)
   
   static public void showActiveGames(){
     System.out.println("Sessões ativas: " + activeGames.keySet().toString());
+    for (GameStats game : activeGames.values()) {
+      System.out.println(game);
+    }
   }
 
   public static String changeChar(String str, int idx, char newChar) {
@@ -43,11 +46,14 @@ public class JordleImplementacao // (1)
       newSession = this.newSession();
       game = new GameStats(newSession);
       activeGames.put(newSession, game);
+      System.out.println("Novo jogo iniciado com a sessão: " + Integer.toString(game.sessionId));
       return game;
-    } 
+    }
 
     if (activeGames.containsKey(sessionId)) {
-      return activeGames.get(sessionId);
+      game = activeGames.get(sessionId);
+      System.out.println("Jogo recuperado com a sessão: " + Integer.toString(game.sessionId));
+      return game;
     }
 
     throw new RemoteException("Foi mal... A sessão " + Integer.toString(sessionId) + " não existe.");
@@ -55,14 +61,13 @@ public class JordleImplementacao // (1)
 
   public GameStats getGame(int sessionId) throws RemoteException {
     GameStats game = fetchGame(sessionId);
-    System.out.println("Novo jogo iniciado com a sessão: " + Integer.toString(game.sessionId));
     showActiveGames();
     return game;
   }
 
   public GameStats newTry(GameStats game) throws RemoteException {
     System.out.println("Nova tentativa na sessão " + Integer.toString(game.sessionId) + " com a palavra: " + game.wordToTry);
-    showActiveGames();
+    // showActiveGames();
     
     if (game.wordToTry.length() != 5) {
       throw new RemoteException("Palavra não tem 5 caracteres.");
@@ -79,7 +84,7 @@ public class JordleImplementacao // (1)
         game.mask = changeChar(game.mask, i, '0');
       }
 
-      System.out.println(Character.toString(tryChar) + " " + countCharMap.toString());
+      // System.out.println(Character.toString(tryChar) + " " + countCharMap.toString());
       
       if (countCharMap.containsKey(tryChar) && countCharMap.get(tryChar) > 0) {
         game.mask = changeChar(game.mask, i, '1');
@@ -106,6 +111,9 @@ public class JordleImplementacao // (1)
       activeGames.remove(game.sessionId);
     }
 
+    // activeGames.remove(game.sessionId);
+    activeGames.put(game.sessionId, game);
+    showActiveGames();
     return game;
   }
 

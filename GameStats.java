@@ -26,4 +26,17 @@ public class GameStats implements Serializable {
     public String getWord(){
         return "teste";
     }
+
+    public String toString(){
+        return (
+            "Game State:\n" + 
+            "-> session:\t" + Integer.toString(this.sessionId) + "\n" +
+            "-> tries:\t" + Integer.toString(this.tries) + "\n" +
+            "-> running:\t" + Boolean.toString(this.running) + "\n" +
+            "-> winner:\t" + Boolean.toString(this.winner) + "\n" +
+            "-> word:\t" + this.word + "\n" +
+            "-> wordToTry:\t" + this.wordToTry + "\n" +
+            "-> mask:\t" + this.mask
+        );
+    }
 }

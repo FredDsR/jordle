@@ -5,30 +5,33 @@ import java.util.Scanner;
 public class JordleCliente {
   public static void main(String[] args) {
     GameStats game;
-    String wordToTry;
-    Jordle jordle; // (1)
+    String wordsToTry;
+    Jordle jordle;
     Scanner scanner = new Scanner(System.in);
     int inputSessionId;
 
     try {
-      jordle = (Jordle) Naming.lookup("rmi://127.0.0.1:1099/Jordle"); // (2)
+      jordle = (Jordle) Naming.lookup("rmi://127.0.0.1:1099/Jordle"); 
       
       if (args.length > 0) {
         inputSessionId = Integer.parseInt(args[0]);
+
       } else {
         inputSessionId = -1;
       }
 
-      game = jordle.getGame(inputSessionId); // (3)
+      game = jordle.getGame(inputSessionId);
+
       System.out.println(
-        "Bem-vindo ao Jordle! Sua sessão é: " + Integer.toString(game.sessionId) + "\n\n" +
-        "Você tem " + Integer.toString(5 - game.tries) + " tentativas. \n\n" + game.wordToTry + "\n" + game.mask);
-      while (game.running && scanner.hasNextLine()) {
-        wordToTry = scanner.nextLine();
-        game.setWordToTry(wordToTry);
+        "Bem-vindo ao Jordle! Sua sessão é: " + Integer.toString(game.sessionId) + "\n\n");
+      
+        printGameState(game);
+
+        while (game.running && scanner.hasNextLine()) {
+        wordsToTry = scanner.nextLine();
+        game.setWordsToTry(formatWordsToTry(wordsToTry, game));
         game = jordle.newTry(game);
-        System.out.println(game.mask);
-        System.out.println();
+        printGameState(game);
       }
       if (game.didIWin()) {
         System.out.println("Você acertou! Um verdadeiro jênio!");
@@ -42,12 +45,35 @@ public class JordleCliente {
       System.out.println("Erro Interno. Nossa culpa, não esquenta. Erro: " + e);
     }
   }
+
+  static private String[] formatWordsToTry(String entry, GameStats game){
+    return entry.split("\\s+");
+  } 
+
+  static private void printGameState(GameStats game){
+    if (game.winner) {
+      System.out.println("Parabéns! Você é um verdadeiro Jênio!");
+      return;
+    }
+
+    System.out.println("Tentativa: " + Integer.toString(game.tries) + "/5");
+    System.out.println(concat(game.words));
+    System.out.println(concat(game.masks));
+  }
+
+  public static String concat(String[] arrayDeStrings) {
+    StringBuilder result = new StringBuilder();
+    
+    for (int i = 0; i < arrayDeStrings.length; i++) {
+        result.append(arrayDeStrings[i]);
+        
+        // Adiciona um espaço se não for o último elemento do array
+        if (i < arrayDeStrings.length - 1) {
+            result.append(" ");
+        }
+    }
+    
+    return result.toString();
+}
 }
 
-/*
-(1) Uma referência local ao serviço desejado.
-
-(2) Retorna a referência a um stub para o objeto remoto. Toda a identificação do serviço desejado deve ser apresentada (o host, a porta e o nome fantasia).
-
-(3) A invocação é feita no stub, resposável por invocar o serviço remoto.
-*/

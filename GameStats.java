@@ -1,30 +1,51 @@
 import java.io.Serializable;
 
 public class GameStats implements Serializable {
-    String word, mask, wordToTry; 
-    int tries, sessionId;
+    String[] words, masks, wordsToTry; 
+    int tries, sessionId, games_qty;
     boolean running, winner;
 
-    public GameStats(int session_id){
+    public GameStats(int session_id, int games_qty){
         this.sessionId = session_id;
         this.tries = 0;
-        this.word = this.getWord();
-        this.mask = "0".repeat(word.length());
-        this.wordToTry = "-".repeat(word.length());
+        this.games_qty = games_qty;
+        this.words = this.getWords();
+        this.masks = this.initMasks();
+        this.wordsToTry = this.initWordsToTry();
         this.running = true;
         this.winner = false;
     }
 
-    public void setWordToTry(String wordToTry) {
-        this.wordToTry = wordToTry;
+    public void setWordsToTry(String[] wordsToTry) {
+        this.wordsToTry = wordsToTry;
     }
 
     public boolean didIWin(){
         return winner;
     }
 
-    public String getWord(){
-        return "teste";
+    public String[] getWords(){
+        String[] words = new String[this.games_qty];
+        for (int i = 0; i < this.games_qty; i++) {
+            words[i] = "teste";
+        }
+        return words;
+    }
+
+    public String[] initMasks(){
+        String[] masks = new String[this.games_qty];
+        for (int i = 0; i < this.games_qty; i++) {
+            masks[i] = "0".repeat(5);
+        }
+        return masks;
+    }
+
+    public String[] initWordsToTry(){
+        String[] wordsToTry = new String[this.games_qty];
+        for (int i = 0; i < this.games_qty; i++) {
+            wordsToTry[i] = "-".repeat(5);
+        }
+        return wordsToTry;
     }
 
     public String toString(){
@@ -34,9 +55,9 @@ public class GameStats implements Serializable {
             "-> tries:\t" + Integer.toString(this.tries) + "\n" +
             "-> running:\t" + Boolean.toString(this.running) + "\n" +
             "-> winner:\t" + Boolean.toString(this.winner) + "\n" +
-            "-> word:\t" + this.word + "\n" +
-            "-> wordToTry:\t" + this.wordToTry + "\n" +
-            "-> mask:\t" + this.mask
+            "-> words:\t" + this.words + "\n" +
+            "-> wordsToTry:\t" + this.wordsToTry + "\n" +
+            "-> masks:\t" + this.masks
         );
     }
 }

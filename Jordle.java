@@ -3,7 +3,7 @@ import java.rmi.RemoteException;
 
 public interface Jordle // (1)
                  extends Remote { 
-  public GameStats getGame(int sessionId) throws RemoteException;
+  public GameStats getGame(int sessionId, int gamesQty) throws RemoteException;
   public GameStats newTry(GameStats game) throws RemoteException;
 }
 

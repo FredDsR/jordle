@@ -38,13 +38,13 @@ public class JordleImplementacao // (1)
       return rand;
   }
 
-  private GameStats fetchGame(int sessionId) throws RemoteException {
+  private GameStats fetchGame(int sessionId, int gamesQty) throws RemoteException {
     GameStats game;
     int newSession;
 
     if (sessionId == -1) {
       newSession = this.newSession();
-      game = new GameStats(newSession);
+      game = new GameStats(newSession, gamesQty);
       activeGames.put(newSession, game);
       System.out.println("Novo jogo iniciado com a sessão: " + Integer.toString(game.sessionId));
       return game;
@@ -59,50 +59,31 @@ public class JordleImplementacao // (1)
     throw new RemoteException("Foi mal... A sessão " + Integer.toString(sessionId) + " não existe.");
   }
 
-  public GameStats getGame(int sessionId) throws RemoteException {
-    GameStats game = fetchGame(sessionId);
+  public GameStats getGame(int sessionId, int gamesQty) throws RemoteException {
+    GameStats game = fetchGame(sessionId, gamesQty);
     showActiveGames();
     return game;
   }
 
   public GameStats newTry(GameStats game) throws RemoteException {
-    System.out.println("Nova tentativa na sessão " + Integer.toString(game.sessionId) + " com a palavra: " + game.wordToTry);
+    System.out.println("Nova tentativa na sessão " + Integer.toString(game.sessionId) + " com as palavras: " + game.wordsToTry);
     // showActiveGames();
-    
-    if (game.wordToTry.length() != 5) {
-      throw new RemoteException("Palavra não tem 5 caracteres.");
-    }
 
-    // Controla a lógica da máscara
-    HashMap<Character, Integer> countCharMap = getCountCharMap(game.word);
-    for (int i = 0; i < game.word.length(); i++) {
+    for (int i = 0; i < game.gamesQty; i++) {
+      game.masks[i] = this.checkWord(game.words[i], game.wordsToTry[i]);
       
-      char trueChar = game.word.charAt(i);
-      char tryChar = game.wordToTry.charAt(i);
-
-      if (trueChar != tryChar) {
-        game.mask = changeChar(game.mask, i, '0');
-      }
-
-      // System.out.println(Character.toString(tryChar) + " " + countCharMap.toString());
-      
-      if (countCharMap.containsKey(tryChar) && countCharMap.get(tryChar) > 0) {
-        game.mask = changeChar(game.mask, i, '1');
-        countCharMap.put(trueChar, countCharMap.get(trueChar) - 1);
-      }
-      
-      if (trueChar == tryChar) {
-        game.mask = changeChar(game.mask, i, '2');
+      // Controla vitória no jogo
+      if (game.masks[i].equals("22222")) {
+        game.winStates[i] = true;
       }
     }
 
-    // Controla vitória no jogo
-    if (game.mask.equals("22222")) {
+    if (this.checkWins(game.winStates)) {
       game.winner = true;
       game.running = false;
       activeGames.remove(game.sessionId);
     }
-    
+
     // Controla tentativas do jogo
     game.tries += 1;
 
@@ -130,6 +111,46 @@ public class JordleImplementacao // (1)
       }
     }
     return countCharMap;
+  }
+
+  private boolean checkWins(boolean[] winStates) {
+    for (boolean value : winStates) {
+        if (!value) {
+            return false;
+        }
+    }
+    return true;
+  } 
+
+  private String checkWord(String word, String wordToTry) throws RemoteException{
+    String mask = "00000";
+    
+    if (wordToTry.length() != 5) {
+      throw new RemoteException("A palavra " + wordToTry + " não tem 5 caracteres.");
+    }
+
+    // Controla a lógica da máscara
+    HashMap<Character, Integer> countCharMap = getCountCharMap(word);
+    for (int i = 0; i < word.length(); i++) {
+      
+      char trueChar = word.charAt(i);
+      char tryChar = wordToTry.charAt(i);
+
+      if (trueChar != tryChar) {
+        mask = changeChar(mask, i, '0');
+      }
+      
+      if (countCharMap.containsKey(tryChar) && countCharMap.get(tryChar) > 0) {
+        mask = changeChar(mask, i, '1');
+        countCharMap.put(trueChar, countCharMap.get(trueChar) - 1);
+      }
+      
+      if (trueChar == tryChar) {
+        mask = changeChar(mask, i, '2');
+      }
+    }
+
+    return mask;
   }
 
 }

@@ -8,26 +8,27 @@ public class JordleCliente {
     String wordsToTry;
     Jordle jordle;
     Scanner scanner = new Scanner(System.in);
-    int inputSessionId;
+    int inputSessionId, gamesQty = -1;
 
     try {
-      jordle = (Jordle) Naming.lookup("rmi://127.0.0.1:1099/Jordle"); 
-      
+      jordle = (Jordle) Naming.lookup("rmi://127.0.0.1:1099/Jordle");
+
       if (args.length > 0) {
         inputSessionId = Integer.parseInt(args[0]);
-
       } else {
         inputSessionId = -1;
+        System.out.println("Quantos jordles simultâneos você consegue jogar?");
+        gamesQty = Integer.valueOf(scanner.nextLine());
       }
 
-      game = jordle.getGame(inputSessionId);
+      game = jordle.getGame(inputSessionId, gamesQty);
 
       System.out.println(
-        "Bem-vindo ao Jordle! Sua sessão é: " + Integer.toString(game.sessionId) + "\n\n");
-      
-        printGameState(game);
+          "Bem-vindo ao Jordle! Sua sessão é: " + Integer.toString(game.sessionId) + "\n\n");
 
-        while (game.running && scanner.hasNextLine()) {
+      printGameState(game);
+
+      while (game.running && scanner.hasNextLine()) {
         wordsToTry = scanner.nextLine();
         game.setWordsToTry(formatWordsToTry(wordsToTry, game));
         game = jordle.newTry(game);
@@ -46,34 +47,33 @@ public class JordleCliente {
     }
   }
 
-  static private String[] formatWordsToTry(String entry, GameStats game){
+  static private String[] formatWordsToTry(String entry, GameStats game) {
     return entry.split("\\s+");
-  } 
+  }
 
-  static private void printGameState(GameStats game){
+  static private void printGameState(GameStats game) {
     if (game.winner) {
       System.out.println("Parabéns! Você é um verdadeiro Jênio!");
       return;
     }
 
-    System.out.println("Tentativa: " + Integer.toString(game.tries) + "/5");
-    System.out.println(concat(game.words));
+    System.out.println("Tentativa: " + Integer.toString(game.tries + 1) + "/5");
+    System.out.println(concat(game.wordsToTry));
     System.out.println(concat(game.masks));
   }
 
   public static String concat(String[] arrayDeStrings) {
     StringBuilder result = new StringBuilder();
-    
-    for (int i = 0; i < arrayDeStrings.length; i++) {
-        result.append(arrayDeStrings[i]);
-        
-        // Adiciona um espaço se não for o último elemento do array
-        if (i < arrayDeStrings.length - 1) {
-            result.append(" ");
-        }
-    }
-    
-    return result.toString();
-}
-}
 
+    for (int i = 0; i < arrayDeStrings.length; i++) {
+      result.append(arrayDeStrings[i]);
+
+      // Adiciona um espaço se não for o último elemento do array
+      if (i < arrayDeStrings.length - 1) {
+        result.append(" ");
+      }
+    }
+
+    return result.toString();
+  }
+}

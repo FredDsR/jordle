@@ -1,5 +1,6 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -66,8 +67,7 @@ public class JordleImplementacao // (1)
   }
 
   public GameStats newTry(GameStats game) throws RemoteException {
-    System.out.println("Nova tentativa na sessão " + Integer.toString(game.sessionId) + " com as palavras: " + game.wordsToTry);
-    // showActiveGames();
+    System.out.println("Nova tentativa na sessão " + Integer.toString(game.sessionId) + " com as palavras: " + Arrays.toString(game.wordsToTry));
 
     for (int i = 0; i < game.gamesQty; i++) {
       game.masks[i] = this.checkWord(game.words[i], game.wordsToTry[i]);
@@ -132,7 +132,6 @@ public class JordleImplementacao // (1)
     // Controla a lógica da máscara
     HashMap<Character, Integer> countCharMap = getCountCharMap(word);
     for (int i = 0; i < word.length(); i++) {
-      
       char trueChar = word.charAt(i);
       char tryChar = wordToTry.charAt(i);
 
@@ -140,14 +139,16 @@ public class JordleImplementacao // (1)
         mask = changeChar(mask, i, '0');
       }
       
+      if (trueChar == tryChar) {
+        mask = changeChar(mask, i, '2');
+        countCharMap.put(trueChar, countCharMap.get(trueChar) - 1);
+      }
+      
       if (countCharMap.containsKey(tryChar) && countCharMap.get(tryChar) > 0) {
         mask = changeChar(mask, i, '1');
         countCharMap.put(trueChar, countCharMap.get(trueChar) - 1);
       }
       
-      if (trueChar == tryChar) {
-        mask = changeChar(mask, i, '2');
-      }
     }
 
     return mask;

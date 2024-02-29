@@ -1,4 +1,5 @@
 import java.io.Serializable;
+import java.util.*;
 
 public class GameStats implements Serializable {
     String[] words, masks, wordsToTry; 
@@ -33,7 +34,7 @@ public class GameStats implements Serializable {
     public String[] getWords(){
         String[] words = new String[this.gamesQty];
         for (int i = 0; i < this.gamesQty; i++) {
-            words[i] = "teste";
+            words[i] = newWord();
         }
         return words;
     }
@@ -61,10 +62,17 @@ public class GameStats implements Serializable {
             "-> tries:\t" + Integer.toString(this.tries) + "\n" +
             "-> running:\t" + Boolean.toString(this.running) + "\n" +
             "-> winner:\t" + Boolean.toString(this.winner) + "\n" +
-            "-> words:\t" + this.words.toString() + "\n" +
-            "-> wordsToTry:\t" + this.wordsToTry.toString() + "\n" +
-            "-> masks:\t" + this.masks.toString() + "\n" +
-            "-> winStates:\t" + this.winStates.toString()
+            "-> words:\t" + Arrays.toString(this.words) + "\n" +
+            "-> wordsToTry:\t" + Arrays.toString(this.wordsToTry) + "\n" +
+            "-> masks:\t" + Arrays.toString(this.masks) + "\n" +
+            "-> winStates:\t" + Arrays.toString(this.winStates)
         );
+    }
+
+    private String newWord(){
+        String[] wordBank = {"besta", "radio", "dente", "enjoo", "pingo", "vulgo", "cache", "oscar", "brejo", "russo"};
+        Random rand = new Random();
+        int idx = rand.nextInt(wordBank.length);
+        return wordBank[idx];
     }
 }

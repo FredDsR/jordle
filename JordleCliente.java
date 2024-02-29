@@ -52,11 +52,6 @@ public class JordleCliente {
   }
 
   static private void printGameState(GameStats game) {
-    if (game.winner) {
-      System.out.println("Parabéns! Você é um verdadeiro Jênio!");
-      return;
-    }
-
     System.out.println("Tentativa: " + Integer.toString(game.tries + 1) + "/5");
     System.out.println(concat(game.wordsToTry));
     System.out.println(concat(game.masks));

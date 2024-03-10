@@ -3,6 +3,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.*;;
 
 public class JordleImplementacao // (1)
              extends UnicastRemoteObject implements Jordle {
@@ -68,15 +69,29 @@ public class JordleImplementacao // (1)
 
   public GameStats newTry(GameStats game) throws RemoteException {
     System.out.println("Nova tentativa na sessão " + Integer.toString(game.sessionId) + " com as palavras: " + Arrays.toString(game.wordsToTry));
+    
+    int numThreads = Runtime.getRuntime().availableProcessors();
+    ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    CompletionService<String> completionService = new ExecutorCompletionService<>(executor);
 
+    // Submete as tarefas de processamento para execução
     for (int i = 0; i < game.gamesQty; i++) {
-      game.masks[i] = this.checkWord(game.words[i], game.wordsToTry[i]);
-      
-      // Controla vitória no jogo
-      if (game.masks[i].equals("22222")) {
-        game.winStates[i] = true;
+      final int idx = i;
+      completionService.submit(() -> this.checkWord(game.words[idx], game.wordsToTry[idx]));
+    }
+
+    // Aguarda a conclusão de todas as tarefas e armazena os resultados no array
+    for (int i = 0; i < game.gamesQty; i++) {
+      try {
+          Future<String> future = completionService.take();
+          game.masks[i] = future.get();
+      } catch (InterruptedException | ExecutionException e) {
+          e.printStackTrace();
       }
     }
+
+    // Controla a vitória de cada jogo
+    for (int i = 0; i < game.gamesQty; i++) game.winStates[i] = game.masks[i].equals("22222");
 
     if (this.checkWins(game.winStates)) {
       game.winner = true;

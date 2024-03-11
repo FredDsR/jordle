@@ -1,5 +1,6 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
@@ -30,7 +31,7 @@ public class JordleImplementacao // (1)
     char[] chars = str.toCharArray(); // Convertendo a string para um array de caracteres
     chars[idx] = newChar; // Alterando o caractere na posição especificada
     return new String(chars); // Convertendo o array de caracteres de volta para uma string
-}
+  }
 
   private Integer newSession(){
       int rand = new Random().nextInt(maxGames + 1);
@@ -72,26 +73,32 @@ public class JordleImplementacao // (1)
     
     int numThreads = Runtime.getRuntime().availableProcessors();
     ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-    CompletionService<String> completionService = new ExecutorCompletionService<>(executor);
+    ArrayList<Future<String>> futures = new ArrayList<>(game.gamesQty);
 
     // Submete as tarefas de processamento para execução
-    for (int i = 0; i < game.gamesQty; i++) {
+    for (int i = 0; i < game.gamesQty; ++i) {
       final int idx = i;
-      completionService.submit(() -> this.checkWord(game.words[idx], game.wordsToTry[idx]));
+      Future<String> future = executor.submit(new Callable<String>() {
+        public String call() throws Exception {
+          return checkWord(game.words[idx], game.wordsToTry[idx]);
+        }
+      });
+      futures.add(idx, future);
     }
 
     // Aguarda a conclusão de todas as tarefas e armazena os resultados no array
-    for (int i = 0; i < game.gamesQty; i++) {
+    for (int i = 0; i < game.gamesQty; ++i) {
       try {
-          Future<String> future = completionService.take();
-          game.masks[i] = future.get();
+          game.masks[i] = futures.get(i).get();
       } catch (InterruptedException | ExecutionException e) {
           e.printStackTrace();
       }
     }
 
+    executor.shutdown();
+
     // Controla a vitória de cada jogo
-    for (int i = 0; i < game.gamesQty; i++) game.winStates[i] = game.masks[i].equals("22222");
+    for (int i = 0; i < game.gamesQty; ++i) game.winStates[i] = game.masks[i].equals("22222");
 
     if (this.checkWins(game.winStates)) {
       game.winner = true;
@@ -102,7 +109,7 @@ public class JordleImplementacao // (1)
     // Controla tentativas do jogo
     game.tries += 1;
 
-    if (game.tries >= 5) {
+    if (game.tries >= 4) {
       game.running = false;
       activeGames.remove(game.sessionId);
     }
@@ -112,12 +119,21 @@ public class JordleImplementacao // (1)
     showActiveGames();
     return game;
   }
-
-  private HashMap<Character, Integer> getCountCharMap(String word) {
+  
+  private boolean checkWins(boolean[] winStates) {
+    for (boolean value : winStates) {
+      if (!value) {
+        return false;
+      }
+    }
+    return true;
+  } 
+  
+  static HashMap<Character, Integer> getCountCharMap(String word) {
     char c;
     HashMap<Character, Integer> countCharMap = new HashMap<Character, Integer>();
     
-    for (int i = 0; i < word.length(); i++) {
+    for (int i = 0; i < word.length(); ++i) {
       c = word.charAt(i);
       if (countCharMap.containsKey(c)) {
         countCharMap.put(c, countCharMap.get(c) + 1);
@@ -127,17 +143,8 @@ public class JordleImplementacao // (1)
     }
     return countCharMap;
   }
-
-  private boolean checkWins(boolean[] winStates) {
-    for (boolean value : winStates) {
-        if (!value) {
-            return false;
-        }
-    }
-    return true;
-  } 
-
-  private String checkWord(String word, String wordToTry) throws RemoteException{
+  
+  static String checkWord(String word, String wordToTry) throws RemoteException{
     String mask = "00000";
     
     if (wordToTry.length() != 5) {
@@ -146,25 +153,37 @@ public class JordleImplementacao // (1)
 
     // Controla a lógica da máscara
     HashMap<Character, Integer> countCharMap = getCountCharMap(word);
-    for (int i = 0; i < word.length(); i++) {
+
+    // Verifica letras corretas no lugar correto
+    for (int i = 0; i < word.length(); ++i) {
       char trueChar = word.charAt(i);
       char tryChar = wordToTry.charAt(i);
-
-      if (trueChar != tryChar) {
-        mask = changeChar(mask, i, '0');
-      }
       
       if (trueChar == tryChar) {
         mask = changeChar(mask, i, '2');
         countCharMap.put(trueChar, countCharMap.get(trueChar) - 1);
       }
-      
-      if (countCharMap.containsKey(tryChar) && countCharMap.get(tryChar) > 0) {
+    }
+
+    System.out.println(word);
+    System.out.println(wordToTry);
+    System.out.println(mask);
+
+    // Verifica letras corretas no lugar errado
+    for (int i = 0; i < word.length(); ++i) {
+      char trueChar = word.charAt(i);
+      char tryChar = wordToTry.charAt(i);
+      char maskChar = mask.charAt(i);
+
+      if (countCharMap.containsKey(tryChar) && countCharMap.get(tryChar) > 0 && maskChar != '2') {
         mask = changeChar(mask, i, '1');
         countCharMap.put(trueChar, countCharMap.get(trueChar) - 1);
       }
-      
     }
+
+    System.out.println(word);
+    System.out.println(wordToTry);
+    System.out.println(mask);
 
     return mask;
   }
